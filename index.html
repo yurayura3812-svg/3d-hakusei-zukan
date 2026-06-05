@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3Dはくせい図鑑</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet">
+
+<style>
+/* ----------- 全体背景：書斎の机をイメージ ----------- */
+body {
+  margin: 0;
+  background: #2c1e1a;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%),
+    repeating-linear-gradient(90deg, #3d2b1f 0px, #3d2b1f 2px, #35251a 2px, #35251a 4px);
+  font-family: 'Kosugi Maru', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: #fdf5e6;
+}
+
+header {
+  width: 100%;
+  background: linear-gradient(to bottom, #444, #222);
+  color: #eac27a; 
+  padding: 18px 0;
+  text-align: center;
+  border-bottom: 4px solid #c5a059;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 1.8em;
+  letter-spacing: 4px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+
+/* ----------- 図鑑の構造（レザー装飾） ----------- */
+.book-stage {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 0px 0 40px 0;
+}
+
+.book-wrap {
+  display: flex;
+  align-items: stretch;
+  background: #4e342e; 
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 0 2px #5d4037, 0 0 0 4px #3e2723;
+  outline: 2px dashed rgba(255,255,255,0.1);
+  outline-offset: -8px;
+  perspective: 2500px;
+  position: relative;
+  width: 660px;
+  transform: translateX(-165px);
+  touch-action: pan-y;
+}
+
+.left-page-full {
+  width: 320px;
+  background: #fdfaf0;
+  background-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png");
+  border-radius: 8px 0 0 8px;
+  z-index: 10;
+  box-shadow: inset -20px 0 40px rgba(0,0,0,0.15);
+}
+
+.book-gutter {
+  width: 14px;
+  background: linear-gradient(to right, #2c1e1a, #5d4037 50%, #2c1e1a);
+  z-index: 50;
+  border-left: 1px solid rgba(255,255,255,0.05);
+  border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+.right-page-main {
+  width: 320px;
+  position: relative;
+  background: #fdfaf0;
+  background-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png");
+  border-radius: 0 8px 8px 0;
+  z-index: 100;
+  box-shadow: inset 20px 0 40px rgba(0,0,0,0.15);
+}
+
+/* ----------- 演出 ----------- */
+@keyframes popup {
+  0% { transform: scale(0.6) translateY(40px); opacity: 0; }
+  70% { transform: scale(1.02) translateY(-3px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); }
+}
+.pop-active { animation: popup 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+/* ----------- コンテンツデザイン ----------- */
+.page-inner { padding: 30px 20px; display: flex; flex-direction: column; gap: 15px; height: 100%; box-sizing: border-box; }
+
+.info-box-title { 
+  background: linear-gradient(135deg, #c5a059, #8c6d31);
+  color: #fff;
+  padding: 8px; border-radius: 4px; text-align: center;
+  font-weight: bold; font-size: 1.2em;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 2px 4px 8px rgba(0,0,0,0.3);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+model-viewer { width: 100%; height: 280px; }
+
+/* ダウンロードエリア */
+#downloadArea { 
+  background: #f4f1ea; padding: 15px 10px; border-radius: 4px; text-align: center; 
+  border: 1px solid #d4cdc3; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+  color: #5d4037;
+}
+#downloadArea a { color: #8c6d31; font-weight: bold; text-decoration: none; font-size: 0.9em; border-bottom: 2px solid #c5a059; transition: 0.2s; }
+
+/* 特定デバイス用の表示切り替え用クラス */
+.hidden-link { display: none !important; }
+.spacer { margin: 8px 0; }
+
+#page_count { text-align: center; font-weight: bold; color: #a1887f; margin-top: auto; letter-spacing: 4px; font-size: 0.9em; }
+
+/* ----------- ナビボタン ----------- */
+.nav-button {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 68px; height: 68px;
+  background: radial-gradient(circle at 35% 35%, #eac27a, #c5a059 40%, #8c6d31 100%);
+  color: #fff; border: 3px solid #5d4037; border-radius: 50%;
+  z-index: 1000; cursor: pointer; font-size: 30px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.5);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; justify-content: center; align-items: center;
+}
+.nav-button:disabled { opacity: 0; pointer-events: none; }
+#prevBtn { left: -34px; }
+#nextBtn { right: -34px; }
+
+.flip-overlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: #fdfaf0; border-radius: 0 8px 8px 0; z-index: 350;
+  pointer-events: none; opacity: 0; transform-origin: left center;
+}
+.do-flip-left { 
+  opacity: 1; transform: rotateY(-180deg); 
+  transition: transform 0.65s ease-in-out, opacity 0.3s;
+  box-shadow: -15px 0 50px rgba(0,0,0,0.4);
+}
+
+@media (max-width: 680px) {
+  .book-wrap { transform: none; width: 340px; }
+  .left-page-full { display: none; }
+  #prevBtn { left: -20px; width: 50px; height: 50px; font-size: 20px; }
+  #nextBtn { right: -20px; width: 50px; height: 50px; font-size: 20px; }
+}
+</style>
+</head>
+
+<body>
+
+<div style="margin: 20px 0; font-weight: bold; color: #c5a059; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-family: 'Shippori Mincho', serif;">
+  資料所蔵・協力：八ヶ岳総合博物館
+</div>
+
+<div class="book-stage">
+  <div class="book-wrap" id="bookWrap">
+    <div class="left-page-full" id="leftStack"></div>
+    <div class="book-gutter"></div>
+    
+    <div class="right-page-main" id="rightPage">
+      <button class="nav-button" id="prevBtn">＜</button>
+      <button class="nav-button" id="nextBtn">＞</button>
+
+      <div class="flip-overlay" id="flipOverlay"></div>
+      
+      <div class="page-inner">
+        <div class="info-box-title"><span id="mTitle">きつね</span></div>
+        
+        <model-viewer id="viewer" src="kitune.glb" ios-src="kitune.usdz" exposure="1.0" auto-rotate camera-controls ar></model-viewer>
+        
+        <div id="downloadArea">
+          <p style="margin:0 0 10px 0; font-size: 0.8em; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">ダウンロード</p>
+          
+          <div id="glbContainer">
+            <a id="glbLink" href="kitune.glb" download>android向け(GLB)</a>
+            <div id="pcSpacer" class="spacer"></div>
+          </div>
+          
+          <div id="usdzContainer">
+            <a id="usdzLink" href="kitune.usdz" download>iphone向け(USDZ)</a>
+          </div>
+        </div>
+        <p id="page_count">1/5</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const mTitle = { 1: "きつね", 2: "たぬき", 3: "こはくちょう", 4: "にほんりす", 5: "こいさぎ" };
+const models = {
+  1: { glb: "kitune.glb", usdz: "kitune.usdz" },
+  2: { glb: "tanuki.glb", usdz: "tanuki.usdz" },
+  3: { glb: "hakuchou.glb", usdz: "hakuchou.usdz" },
+  4: { glb: "risu.glb", usdz: "risu.usdz" },
+  5: { glb: "tori.glb", usdz: "tori.usdz" },
+};
+
+let currentIndex = 1;
+const maxPages = 5;
+let isAnimating = false;
+let touchStartX = 0;
+let touchEndX = 0;
+let isScrollingModel = false;
+
+// --- デバイス判定とリンクの表示制御 ---
+function adjustLinksForDevice() {
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  
+  const glbArea = document.getElementById("glbContainer");
+  const usdzArea = document.getElementById("usdzContainer");
+  const spacer = document.getElementById("pcSpacer");
+
+  if (isIOS) {
+    glbArea.classList.add("hidden-link");
+    spacer.classList.add("hidden-link");
+  } else if (isAndroid) {
+    usdzArea.classList.add("hidden-link");
+    spacer.classList.add("hidden-link");
+  } else {
+    // PCなどの場合は両方表示
+  }
+}
+
+function updatePaperStyle(index) {
+  const remaining = maxPages - index;
+  let sR = "";
+  for (let i = 1; i <= remaining; i++) sR += `${i}px ${i}px 0 ${i % 2 === 0 ? "#fdfaf0" : "#eee"}${i === remaining ? "" : ", "}`;
+  document.getElementById("rightPage").style.boxShadow = `inset 20px 0 40px rgba(0,0,0,0.15)${sR ? ", " + sR : ""}`;
+
+  const turned = index - 1;
+  let sL = "";
+  for (let i = 1; i <= turned; i++) sL += `-${i}px ${i}px 0 ${i % 2 === 0 ? "#fdfaf0" : "#eee"}${i === turned ? "" : ", "}`;
+  document.getElementById("leftStack").style.boxShadow = `inset -20px 0 40px rgba(0,0,0,0.15)${sL ? ", " + sL : ""}`;
+}
+
+function changePage(newIdx, dir) {
+  if (newIdx < 1 || newIdx > maxPages || isAnimating) return;
+  isAnimating = true;
+
+  const overlay = document.getElementById("flipOverlay");
+  const viewer = document.getElementById("viewer");
+
+  if (dir === 'next') {
+    overlay.style.transition = 'none';
+    overlay.style.transform = 'rotateY(0deg)';
+    overlay.style.opacity = '1';
+    void overlay.offsetWidth;
+    overlay.classList.add("do-flip-left");
+  } else {
+    overlay.style.transition = 'none';
+    overlay.style.transform = 'rotateY(-180deg)';
+    overlay.style.opacity = '1';
+    void overlay.offsetWidth;
+    overlay.style.transition = 'transform 0.65s ease-in-out, opacity 0.3s';
+    overlay.style.transform = 'rotateY(0deg)';
+  }
+
+  setTimeout(() => {
+    currentIndex = newIdx;
+    document.getElementById("mTitle").innerText = mTitle[currentIndex]; 
+    document.getElementById("page_count").innerText = `${currentIndex}/${maxPages}`;
+    viewer.src = models[currentIndex].glb;
+    viewer.setAttribute("ios-src", models[currentIndex].usdz);
+    document.getElementById("glbLink").href = models[currentIndex].glb;
+    document.getElementById("usdzLink").href = models[currentIndex].usdz;
+
+    viewer.classList.remove("pop-active");
+    void viewer.offsetWidth; 
+    viewer.classList.add("pop-active");
+
+    updatePaperStyle(currentIndex);
+    document.getElementById("prevBtn").disabled = (currentIndex === 1);
+    document.getElementById("nextBtn").disabled = (currentIndex === maxPages);
+  }, 300);
+
+  setTimeout(() => {
+    overlay.classList.remove("do-flip-left");
+    overlay.style.opacity = '0';
+    isAnimating = false;
+  }, 750);
+}
+
+document.getElementById("prevBtn").addEventListener("click", () => changePage(currentIndex - 1, 'prev'));
+document.getElementById("nextBtn").addEventListener("click", () => changePage(currentIndex + 1, 'next'));
+
+// フリック操作
+const bookWrap = document.getElementById("bookWrap");
+bookWrap.addEventListener("touchstart", (e) => {
+  if (e.target.closest('model-viewer')) {
+    isScrollingModel = true;
+  } else {
+    isScrollingModel = false;
+    touchStartX = e.changedTouches[0].screenX;
+  }
+}, { passive: true });
+
+bookWrap.addEventListener("touchend", (e) => {
+  if (isScrollingModel) return;
+  touchEndX = e.changedTouches[0].screenX;
+  handleGesture();
+}, { passive: true });
+
+function handleGesture() {
+  const swipeThreshold = 70;
+  const diff = touchStartX - touchEndX;
+  if (Math.abs(diff) > swipeThreshold) {
+    if (diff > 0) {
+      if (currentIndex < maxPages) changePage(currentIndex + 1, 'next');
+    } else {
+      if (currentIndex > 1) changePage(currentIndex - 1, 'prev');
+    }
+  }
+}
+
+window.onload = () => {
+  adjustLinksForDevice(); // デバイスに合わせて表示を調整
+  updatePaperStyle(1);
+  document.getElementById("prevBtn").disabled = true;
+  document.getElementById("viewer").classList.add("pop-active");
+};
+</script>
+
+</body>
+</html>
