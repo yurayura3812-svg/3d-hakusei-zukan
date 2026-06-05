@@ -11,7 +11,7 @@ Webサイトでの公開によって機種・OS問わず閲覧可能とした。
 
 ## 公開URL
 
-
+https://yurayura3812-svg.github.io/3d-hakusei-zukan/
 
 ## 技術スタック
 
