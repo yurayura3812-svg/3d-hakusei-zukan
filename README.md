@@ -1,5 +1,4 @@
 # 3Dはくせい図鑑
-https://yurayura3812-svg.github.io/3d-hakusei-zukan/
 iPhone LiDARで取得した剥製の3Dモデルを、機種を問わず閲覧できるWebサイト。
 八ヶ岳総合博物館との連携プロジェクトとして開発。
 
